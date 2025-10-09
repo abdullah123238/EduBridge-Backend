@@ -6,6 +6,7 @@ const {
   createCourse,
   getCourses,
   getUserCourses,
+  getPublicCourses,
   getCourse,
   getCourseDetails,
   updateCourse,
@@ -35,6 +36,9 @@ const courseIdValidation = [
     .isMongoId()
     .withMessage('Invalid course ID')
 ];
+
+// Public route for browsing courses (no authentication required)
+router.get('/public', getPublicCourses);
 
 router.use(protect);
 
