@@ -257,6 +257,44 @@ const getUserCourses = async (req, res, next) => {
     next(error);
   }
 };
+const getPublicCourses = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 10, search } = req.query;
+
+    let query = { isActive: true };
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { code: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const courses = await Course.find(query)
+      .populate('lecturer', 'name email')
+      .populate('students', 'name email')
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .sort({ createdAt: -1 });
+
+    const total = await Course.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      data: courses,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: parseInt(limit)
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const enrollInCourse = async (req, res, next) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -297,6 +335,7 @@ module.exports = {
   createCourse,
   getCourses,
   getUserCourses,
+  getPublicCourses,
   getCourse,
   getCourseDetails,
   updateCourse,
